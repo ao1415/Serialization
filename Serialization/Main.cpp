@@ -69,6 +69,11 @@ namespace State {
 
 		Serializer<BinaryWriter> writer(path);
 
+		sfmt::SFMT_T randomState;
+		std::memcpy(&randomState, &GetDefaultRNG(), sizeof(sfmt::SFMT_T));
+
+		writer.getWriter().write(randomState);
+
 		writer(objects.size());
 
 		for (auto& o : objects)
@@ -84,6 +89,11 @@ namespace State {
 		objects.clear();
 
 		Deserializer<BinaryReader> reader(path);
+
+		sfmt::SFMT_T randomState;
+		reader.getReader().read(randomState);
+
+		std::memcpy(&GetDefaultRNG(), &randomState, sizeof(sfmt::SFMT_T));
 
 		size_t size;
 		reader(size);
@@ -152,8 +162,8 @@ private:
 public:
 
 	EffectBlue(const size_t objectId) : Object(objectId) {
-		pos = Scene::CenterF();
-		acceleration = RandomVec2(1);
+		pos = Vec2(Random(800), 0);
+		acceleration = Vec2(0, 1);
 	}
 
 	bool update() override {
@@ -222,20 +232,6 @@ void Main() {
 
 		ClearPrint();
 		Print << object.size();
-		Print << sizeof(SFMT19937_64) << U", " << sizeof(sfmt::SFMT_T);
-		sfmt::SFMT_T randomState;
-
-		std::memcpy(&randomState, &GetDefaultRNG(), sizeof(sfmt::SFMT_T));
-		Print << randomState.idx;
-		for (int i = 0; i < 156; i += 4)
-		{
-			String line = U"";
-			line += ToHex(randomState.state[i + 0].u64[0]) + ToHex(randomState.state[i + 0].u64[1]);
-			line += ToHex(randomState.state[i + 1].u64[0]) + ToHex(randomState.state[i + 1].u64[1]);
-			line += ToHex(randomState.state[i + 2].u64[0]) + ToHex(randomState.state[i + 2].u64[1]);
-			line += ToHex(randomState.state[i + 3].u64[0]) + ToHex(randomState.state[i + 3].u64[1]);
-			FontAsset(U"Debug2")(line).draw(0, 8 * i / 4);
-		}
 
 		if ((KeyShift + Key1).down())
 		{
